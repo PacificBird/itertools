@@ -117,6 +117,7 @@ pub mod structs {
     pub use crate::intersperse::{Intersperse, IntersperseWith};
     #[cfg(feature = "use_alloc")]
     pub use crate::kmerge_impl::{KMerge, KMergeBy};
+    pub use crate::map_pairs::MapPairs;
     pub use crate::merge_join::{Merge, MergeBy, MergeJoinBy};
     #[cfg(feature = "use_alloc")]
     pub use crate::multipeek_impl::MultiPeek;
@@ -208,6 +209,7 @@ mod k_smallest;
 mod kmerge_impl;
 #[cfg(feature = "use_alloc")]
 mod lazy_buffer;
+mod map_pairs;
 mod merge_join;
 mod minmax;
 #[cfg(feature = "use_alloc")]
@@ -961,6 +963,33 @@ pub trait Itertools: Iterator {
         F: FnMut(T) -> U,
     {
         adaptors::map_ok(self, f)
+    }
+
+    /// Return an iterator that maps over consecutive pairs using a provided
+    /// binary function, with the latest element passed into the function first.
+    ///
+    /// `map_pairs` clones the iterator elements so that they can be
+    /// part of successive windows, this makes it most suited for iterators
+    /// of references and other values that are cheap to copy.
+    ///
+    /// This is essentially a special convenience function for [`tuple_windows`]
+    /// that makes it possible to directly pass in a binary function pointer.
+    /// For example, you can use it to elegantly calculate the "discrete derivative"
+    /// of an iterator.
+    /// ```
+    /// use itertools::Itertools;
+    ///
+    /// let input = vec![1, 3, 5, 7];
+    /// let it = input.into_iter().map_pairs(std::ops::Sub::sub);
+    /// itertools::assert_equal(it, vec![2, 2, 2]);
+    /// ```
+    fn map_pairs<F, T, U>(self, f: F) -> MapPairs<Self, F>
+    where
+        Self: Iterator<Item = T> + Sized,
+        T: Clone,
+        F: FnMut(T, T) -> U,
+    {
+        map_pairs::map_pairs(self, f)
     }
 
     /// Return an iterator adaptor that filters every `Result::Ok`
