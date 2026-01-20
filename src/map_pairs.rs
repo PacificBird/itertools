@@ -10,6 +10,7 @@ where
 /// An iterator to apply a binary mapping function on consecutive pairs of elements.
 ///
 /// See [`.map_pairs()`](crate::Itertools::map_pairs) for more information.
+#[must_use = "iterators are lazy and do nothing unless consumed"]
 #[derive(Debug)]
 pub struct MapPairs<I: Iterator, F> {
     iter: I,
